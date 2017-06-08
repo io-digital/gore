@@ -17,6 +17,9 @@
       start_at: 'http://google.com',
       steps: [
         function() {
+          return 'doesntexist'
+        },
+        function() {
           return true
         }
       ]
