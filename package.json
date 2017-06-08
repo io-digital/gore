@@ -2,6 +2,12 @@
   "name": "probable-disco",
   "version": "0.0.0",
   "description": "headless chrome test harness",
+  "keywords": [
+    "headless",
+    "chrome",
+    "testing",
+    "test"
+  ],
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
