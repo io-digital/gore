@@ -10,21 +10,19 @@ var remote_debug = util.promisify(function(x, cb) {
   chrome(cb.bind(cb, null)).on('error', cb)
 })
 
-async function next_test_or_quit(step_index, test_index, suite, failed) {
-  step_index = 0
-  test_index += 1
+async function next_test_or_quit(test_index, suite, failed) {
   if (test_index >= suite.length) {
     this.rd.Page.loadEventFired()
     // display some test run stats and quit
     console.log('failures', failed)
+    var exit = process.exit.bind(process, failed ? 1 : 0)
     return Promise.all([
       this.rd.close(),
       this.launcher.kill()
-    ]).then(
-      process.exit
-    ).catch(
-      console.log
-    )
+    ]).catch(function(err) {
+      console.log(err)
+      exit()
+    }).then(exit)
   }
   // otherwise, navigate to the next test starting point
   console.log(suite[test_index].description)
@@ -45,23 +43,7 @@ function get_export() {
         if (step_index >= suite[test_index].steps.length) {
           step_index = 0
           test_index += 1
-          if (test_index >= suite.length) {
-            this.rd.Page.loadEventFired()
-            // display some test run stats and quit
-            console.log('failures', failed)
-            return Promise.all([
-              this.rd.close(),
-              this.launcher.kill()
-            ]).then(
-              process.exit
-            ).catch(
-              console.log
-            )
-          }
-          // otherwise, navigate to the next test starting point
-          console.log(suite[test_index].description)
-          await this.rd.Page.navigate({url: suite[test_index].start_at})
-          return
+          return next_test_or_quit.call(this, test_index, suite, failed)
         }
 
         try {
@@ -72,23 +54,7 @@ function get_export() {
           // move onto the next set of steps or quit
           step_index = 0
           test_index += 1
-          if (test_index >= suite.length) {
-            this.rd.Page.loadEventFired()
-            // display some test run stats and quit
-            console.log('failures', failed)
-            return Promise.all([
-              this.rd.close(),
-              this.launcher.kill()
-            ]).then(
-              process.exit
-            ).catch(
-              console.log
-            )
-          }
-          // otherwise, navigate to the next test starting point
-          console.log(suite[test_index].description)
-          await this.rd.Page.navigate({url: suite[test_index].start_at})
-          return
+          return next_test_or_quit.call(this, test_index, suite, failed)
         }
         
         var result_type = typeof result
@@ -108,23 +74,7 @@ function get_export() {
         
         step_index = 0
         test_index += 1
-        if (test_index >= suite.length) {
-          this.rd.Page.loadEventFired()
-          // display some test run stats and quit
-          console.log('failures', failed)
-          return Promise.all([
-            this.rd.close(),
-            this.launcher.kill()
-          ]).then(
-            process.exit.bind(process, failed ? 1 : 0)
-          ).catch(
-            console.log
-          )
-        }
-        // otherwise, navigate to the next test starting point
-        console.log(suite[test_index].description)
-        await this.rd.Page.navigate({url: suite[test_index].start_at})
-        return
+        return next_test_or_quit.call(this, test_index, suite, failed)
       }.bind(this))
 
       // start the test suite with the first navigation
@@ -136,23 +86,7 @@ function get_export() {
         
         step_index = 0
         test_index += 1
-        if (test_index >= suite.length) {
-          this.rd.Page.loadEventFired()
-          // display some test run stats and quit
-          console.log('failures', failed)
-          return Promise.all([
-            this.rd.close(),
-            this.launcher.kill()
-          ]).then(
-            process.exit
-          ).catch(
-            console.log
-          )
-        }
-        // otherwise, navigate to the next test starting point
-        console.log(suite[test_index].description)
-        await this.rd.Page.navigate({url: suite[test_index].start_at})
-        return
+        return next_test_or_quit.call(this, test_index, suite, failed)
       }
     }.bind(this),
     page: this.rd.Page,
