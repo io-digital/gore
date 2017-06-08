@@ -1,5 +1,6 @@
 
-var fs = require('fs')
+'use strict'
+
 var util = require('util')
 
 var {Launcher} = require('lighthouse/chrome-launcher')
@@ -9,6 +10,8 @@ var remote_debug = util.promisify(function(x, cb) {
   chrome(cb.bind(cb, null)).on('error', cb)
 })
 
+// TODO add elapsed time
+// TODO add more devtools domains
 // TODO fix duplication with `next_test_or_quit` or similar
 
 async function next_test_or_quit(step_index, test_index, suite, failed) {
@@ -36,21 +39,6 @@ async function next_test_or_quit(step_index, test_index, suite, failed) {
 function get_export() {
   return {
     tests: async function(suite) {
-      // suite struct
-      // [
-      //   {
-      //     description: '',
-      //     start_at: '',
-      //     steps: [
-      //       async function() {
-      //         // return string to navigate
-      //         // return true to pass
-      //         // return false to fail
-      //       }
-      //     ]
-      //   }
-      // ]
-
       var failed = 0
       var test_index = 0
       var step_index = 0
@@ -59,9 +47,6 @@ function get_export() {
 
         // if the end of the step set has been reached
         if (step_index >= suite[test_index].steps.length) {
-          // await next_test_or_quit.call(this, step_index, test_index, suite, failed)
-          // return
-
           step_index = 0
           test_index += 1
           if (test_index >= suite.length) {
@@ -89,8 +74,6 @@ function get_export() {
         } catch (e) {
           failed += 1
           // move onto the next set of steps or quit
-          // await next_test_or_quit.call(this, step_index, test_index, suite, failed)
-          // return
           step_index = 0
           test_index += 1
           if (test_index >= suite.length) {
@@ -126,8 +109,7 @@ function get_export() {
         } else {
           failed += 1
         }
-        // await next_test_or_quit.call(this, step_index, test_index, suite, failed)
-        // return
+        
         step_index = 0
         test_index += 1
         if (test_index >= suite.length) {
@@ -155,8 +137,7 @@ function get_export() {
         await this.rd.Page.navigate({url: suite[test_index].start_at})
       } catch (e) {
         failed += 1
-        // await next_test_or_quit.call(this, step_index, test_index, suite, failed)
-        // return
+        
         step_index = 0
         test_index += 1
         if (test_index >= suite.length) {
@@ -196,9 +177,7 @@ var instance = {}
 
 module.exports = async function(options = {}) {
   
-  if (instance.launcher && instance.rd) {
-    return get_export.call(instance)
-  }
+  if (instance.launcher && instance.rd) return get_export.call(instance)
   
   instance.launcher = new Launcher({
     port: 9222,
@@ -232,17 +211,14 @@ module.exports = async function(options = {}) {
 
   if (options.system) {
     try {
-      await instance.rd.SystemInfo.getInfo().catch(
-        console.log
-      )
+      // this throws for some reason
+      await instance.rd.SystemInfo.getInfo().then(console.log)
     } catch (e) {
       console.log(e)
     }
   }
 
-  if (options.console) {
-    instance.rd.Log.entryAdded(console.log)
-  }
+  if (options.console) instance.rd.Log.entryAdded(console.log)
 
   return get_export.call(instance)
 }
