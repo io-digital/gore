@@ -1,0 +1,15 @@
+{
+  "name": "probable-disco",
+  "version": "0.0.0",
+  "description": "headless chrome test harness",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ant Cosentino <ant@io.co.za>",
+  "license": "ISC",
+  "dependencies": {
+    "chrome-remote-interface": "^0.23.2",
+    "lighthouse": "^2.0.0"
+  }
+}
