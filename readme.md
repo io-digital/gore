@@ -53,7 +53,6 @@ each test case and its constituent steps are executed sequentially.
 * [ ] better/more documentation
 * [ ] investigate `SystemInfo` domain
 * [ ] add more devtools domains and abstractions
-* [ ] fix duplication with `next_test_or_quit` or similar
 * [ ] add more testing runtime statistics and feedback
 * [ ] description strings for test steps
 * [ ] tests
