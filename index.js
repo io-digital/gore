@@ -10,8 +10,9 @@ var remote_debug = util.promisify(function(x, cb) {
   chrome(cb.bind(cb, null)).on('error', cb)
 })
 
+// TODO write abstraction for Runtime.evaluate
 // TODO add elapsed time
-// TODO add more devtools domains
+// TODO add more devtools domains and abstractions
 // TODO fix duplication with `next_test_or_quit` or similar
 
 async function next_test_or_quit(step_index, test_index, suite, failed) {
