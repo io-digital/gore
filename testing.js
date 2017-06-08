@@ -1,67 +1,62 @@
 
 (async function() {
 
-  var {test, page, dom, network, runtime, kill} = await require('.')()
+  var headless_testing = require('.')
 
-  test('foo', async function() {
-    var step_idx = 0
-    var steps = [
-      async function() {
-        console.log(1)
-        // type in forms, click buttons here
-        await page.navigate({url: 'http://google.com/#q=a'})
-      },
-      async function() {
-        console.log(2)
-        // type in forms, click buttons here
-        await page.navigate({url: 'http://google.com/#q=b'})
-      },
-      async function() {
-        console.log(3)
-        // type in forms, click buttons here
-        await page.navigate({url: 'http://google.com/#q=c'})
-      }
-    ]
-
-    page.loadEventFired(function() {
-      if (step_idx === steps.length) {
-        page.loadEventFired()
-        return
-      }
-      steps[step_idx]()
-      step_idx += 1
-    })
-    
-    await page.navigate({url: 'http://google.com'})
+  var {
+    tests, page, dom,
+    network, runtime,
+    input, kill
+  } = await headless_testing().catch(function(err) {
+    console.log(err)
+    process.exit(1)
   })
 
-  test('bar', async function() {
-    var step_idx = 0
-    var steps = [
-      async function() {
-        console.log(4)
-        await page.navigate({url: 'http://google.com/#q=d'})
-      },
-      async function() {
-        console.log(5)
-        await page.navigate({url: 'http://google.com/#q=e'})
-      },
-      async function() {
-        console.log(6)
-        await page.navigate({url: 'http://google.com/#q=f'})
-      }
-    ]
-
-    page.loadEventFired(function() {
-      if (step_idx === steps.length) {
-        page.loadEventFired()
-        return
-      }
-      steps[step_idx]()
-      step_idx += 1
-    })
-
-    await page.navigate({url: 'http://google.com'})
-  })
+  tests([
+    {
+      description: 'foo',
+      start_at: 'http://google.com',
+      steps: [
+        async function() {
+          // return null to indicate manual navigation
+          // return string to navigate
+          // return true to pass
+          // return false to fail
+          console.log(1)
+          return 'http://google.com/#q=a'
+        },
+        async function() {
+          console.log(2)
+          return 'http://google.com/#q=b'
+        },
+        async function() {
+          console.log(3)
+          return true
+        }
+      ]
+    },
+    {
+      description: 'bar',
+      start_at: 'http://google.com',
+      steps: [
+        async function() {
+          // return null to indicate manual navigation
+          // return string to navigate
+          // return true to pass
+          // return false to fail
+          console.log(4)
+          return 'http://google.com/#q=c'
+        },
+        async function() {
+          console.log(5)
+          return 'http://google.com/#q=d'
+        },
+        async function() {
+          console.log(6)
+          return true
+        }
+      ]
+    }
+  ])
 
 })()
