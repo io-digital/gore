@@ -21,7 +21,8 @@ each test case and its constituent steps are executed sequentially.
         await runtime.eval(function() {
           var search_box = document.querySelector('#lst-ib')
           search_box.value = 'kitties'
-          search_box.form.submit()
+          search_box.form.submit() // submit the form to trigger a page navigation
+                                   // which causes the next step to be executed
         })
       },
       async function() {
