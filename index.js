@@ -116,7 +116,7 @@ function get_export() {
             this.rd.close(),
             this.launcher.kill()
           ]).then(
-            process.exit
+            process.exit.bind(process, failed ? 1 : 0)
           ).catch(
             console.log
           )
