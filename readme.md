@@ -1,9 +1,11 @@
 
 # gore
 
-gore is a simple and mostly unfinished chrome headless test runner using a slightly monkey-patched [chrome-remote-interface](https://npmjs.org/chrome-remote-interface) as the mechanism for performing webapp tests.
+gore is a simple and mostly unfinished chrome headless test runner using a slightly monkey-patched [chrome-remote-interface](https://npmjs.org/chrome-remote-interface) as the mechanism for controlling the chrome instance.
 
-the test runner is page navigation oriented, meaning that individual tests are split into steps (just async functions) that trigger some kind of page navigation and ultimately a boolean value indicating the outcome of your test case. each test case and its consituent steps are executed sequentially.
+the test runner is page navigation oriented, meaning that individual tests are split into steps (just async functions) that trigger some kind of page navigation and ultimately a boolean value indicating the outcome of your test case.
+
+each test case and its constituent steps are executed sequentially.
 
 ## example
 
@@ -56,6 +58,10 @@ the test runner is page navigation oriented, meaning that individual tests are s
 * [ ] tests
 * [ ] contribution guidelines
 * [ ] refactor test runner so `runtime.eval`s that throw will automatically fail a test
+* [ ] write weird test cases to learn and improve the limits of the test runner
+* [ ] write examples using more devtools domains
+* [ ] [screenshot capture](https://medium.com/@dschnr/using-headless-chrome-as-an-automated-screenshot-tool-4b07dffba79a)
+* [ ] test case parallelism using multiple chrome instances/tabs?
 
 ## legal
 
