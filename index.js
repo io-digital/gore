@@ -12,10 +12,10 @@ var remote_debug = util.promisify(function(x, cb) {
 
 async function next_test_or_quit(test_index, suite, failed) {
   if (test_index >= suite.length) {
-    this.rd.Page.loadEventFired()
-    // display some test run stats and quit
-    console.log('failures', failed)
-    var exit = process.exit.bind(process, failed ? 1 : 0)
+    failed.forEach(function(failure) {
+      console.log('[gore]', 'failure:', failure)
+    })
+    var exit = process.exit.bind(process, failed.length ? 1 : 0)
     return Promise.all([
       this.rd.close(),
       this.launcher.kill()
@@ -25,69 +25,94 @@ async function next_test_or_quit(test_index, suite, failed) {
     }).then(exit)
   }
   // otherwise, navigate to the next test starting point
-  console.log(suite[test_index].description)
-  await this.rd.Page.navigate({url: suite[test_index].start_at})
-  return
+  console.log('[gore]', 'starting:', suite[test_index].description)
+  try {
+    await this.rd.Page.navigate({url: suite[test_index].start_at})
+  } catch (e) {
+    failed.push(`test ${test_index + 1} step 1 failed with navigation error ${e}`)
+    return (await next_test_or_quit.call(this, ++test_index, suite, failed))
+  }
+  return 0
+}
+
+function validate_suite(suite) {
+  console.log('[gore]', 'starting:', 'test suite argument type check')
+  var tests = []
+  if (!(Array.isArray(suite) && suite.length)) {
+    throw new Error('expected lengthy array `suite`')
+  }
+  for (var test in suite) {
+    if (!(typeof suite[test].start_at === 'string' &&
+          suite[test].start_at.length)) {
+      throw new Error('expected lengthy string `start_at`')
+    }
+    suite[test].description = suite[test].description || `test ${+test + 1}`
+    if (!(Array.isArray(suite[test].steps) && suite[test].steps.length)) {
+      throw new Error('expected lengthy array `steps`')
+    }
+    for (var func in suite[test].steps) {
+      if (!(typeof suite[test].steps[func] === 'function')) {
+        throw new Error('expected function in `steps` array')
+      }
+    }
+  }
+  console.log('[gore]', 'stopping:', 'type check success')
 }
 
 function get_export() {
   return {
     suite: async function(suite) {
-      var failed = 0
-      var test_index = 0
+      // first ensure the test suite is usable
+      validate_suite(suite)
+
+      // set up control variables
+      var failed = []
+      var test_index = -1
       var step_index = 0
 
+      // bind the page load event
       this.rd.Page.loadEventFired(async function() {
-
-        // if the end of the step set has been reached
-        if (step_index >= suite[test_index].steps.length) {
-          step_index = 0
-          test_index += 1
-          return next_test_or_quit.call(this, test_index, suite, failed)
-        }
-
+        var threw = false
+        // console.log('page load', test_index, step_index)
         try {
           // attempt to run the step
           var result = await suite[test_index].steps[step_index]()
         } catch (e) {
-          failed += 1
-          // move onto the next set of steps or quit
-          step_index = 0
-          test_index += 1
-          return next_test_or_quit.call(this, test_index, suite, failed)
+          failed.push(`test ${test_index + 1} step ${step_index + 1} failed with an error: \n  ${e.stack}`)
+          threw = true
         }
         
         var result_type = typeof result
-        if (result_type === 'undefined' || result_type === 'string') {
+        if (threw) {
+          // the test threw, wait for the next test case to begin...
+        } else if (result_type === 'undefined') {
           step_index += 1
-          if (result_type === 'string') {
+          return // return to wait for the next page load event
+                 // because the test case is not finished yet
+        } else if (result_type === 'string') {
+          try {
+            step_index += 1
             await this.rd.Page.navigate({url: result})
+            return // return to wait for the next page load event
+                   // because the test case is not finished yet
+          } catch (e) {
+            failed.push(`test ${test_index + 1} step ${step_index + 1} failed with navigation error: \n  ${e} "${result}"`)
+            step_index = await next_test_or_quit.call(this, ++test_index, suite, failed)
+            return
           }
-          return
         } else if (result_type === 'boolean' && !result) {
-          failed += 1
+          failed.push(`test ${test_index + 1} step ${step_index + 1} failed with boolean false`)
         } else if (result_type === 'boolean' && result) {
           // the test passed, do nothing...
+          console.log('[gore]', 'passed:', suite[test_index].description)
         } else {
-          failed += 1
+          failed.push(`test ${test_index + 1} step ${step_index + 1} failed with unexpected type: ${result_type}`)
         }
-        
-        step_index = 0
-        test_index += 1
-        return next_test_or_quit.call(this, test_index, suite, failed)
+        step_index = await next_test_or_quit.call(this, ++test_index, suite, failed)
       }.bind(this))
 
-      // start the test suite with the first navigation
-      try {
-        console.log(suite[test_index].description)
-        await this.rd.Page.navigate({url: suite[test_index].start_at})
-      } catch (e) {
-        failed += 1
-        
-        step_index = 0
-        test_index += 1
-        return next_test_or_quit.call(this, test_index, suite, failed)
-      }
+      // navigate to the first test case
+      await next_test_or_quit.call(this, ++test_index, suite, failed)
     }.bind(this),
     page: this.rd.Page,
     dom: this.rd.DOM,
@@ -100,7 +125,9 @@ function get_export() {
         })
         if (res.exceptionDetails) {
           // the input expression threw
-          throw new Error(JSON.stringify(res.exceptionDetails.exception, '\t', 2))
+          var err = new (global[res.exceptionDetails.exception.className] || Error)()
+          err.stack = res.exceptionDetails.exception.description
+          throw err
         }
         return res.result.value
       }.bind(this)
