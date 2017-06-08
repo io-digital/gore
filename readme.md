@@ -58,11 +58,13 @@ each test case and its constituent steps are executed sequentially.
 * [ ] description strings for test steps
 * [ ] tests
 * [ ] contribution guidelines
-* [ ] refactor test runner so `runtime.eval`s that throw will automatically fail a test
 * [ ] write weird test cases to learn and improve the limits of the test runner
 * [ ] write examples using more devtools domains
 * [ ] [screenshot capture](https://medium.com/@dschnr/using-headless-chrome-as-an-automated-screenshot-tool-4b07dffba79a)
 * [ ] test case parallelism using multiple chrome instances/tabs?
+* [ ] before/after(all) hooks
+* [ ] machine readable output formats
+* [ ] detect faulty/unending test cases (final function in steps returns `null`/`undefined`)
 
 ## why gore?
 
