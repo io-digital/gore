@@ -64,6 +64,10 @@ each test case and its constituent steps are executed sequentially.
 * [ ] [screenshot capture](https://medium.com/@dschnr/using-headless-chrome-as-an-automated-screenshot-tool-4b07dffba79a)
 * [ ] test case parallelism using multiple chrome instances/tabs?
 
+## why gore?
+
+how could you have no head without spilling some blood?
+
 ## legal
 
 "Google" and "Google Chrome" are trademarks held by Alphabet Inc. i am in no way affiliated with these companies and/or their projects.
