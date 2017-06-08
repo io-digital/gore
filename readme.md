@@ -50,6 +50,7 @@ each test case and its constituent steps are executed sequentially.
 
 ## todo
 
+* [ ] the test runner will use chrome canary by default if it is installed
 * [ ] better/more documentation
 * [ ] investigate `SystemInfo` domain
 * [ ] add more devtools domains and abstractions
