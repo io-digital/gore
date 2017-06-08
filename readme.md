@@ -1,7 +1,7 @@
 
 # gore
 
-gore is a simple and mostly unfinished chrome headless test runner using a slightly monkey-patched [chrome-remote-interface](https://npmjs.org/chrome-remote-interface) as the mechanism for controlling the chrome instance.
+gore is a simple and mostly unfinished chrome headless test runner using a slightly monkey-patched [chrome-remote-interface](https://npmjs.org/package/chrome-remote-interface) as the mechanism for controlling the chrome instance.
 
 the test runner is page navigation oriented, meaning that individual tests are split into steps (just async functions) that trigger some kind of page navigation and ultimately a boolean value indicating the outcome of your test case.
 
