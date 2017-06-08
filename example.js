@@ -12,35 +12,47 @@
     process.exit(1)
   })
 
-  suite([{
-    description: 'run a google search',
-    start_at: 'http://google.com',
-    steps: [
-      async function() {
-        await runtime.eval(function() {
-          var search_box = document.querySelector('#lst-ib')
-          search_box.value = 'google'
-          search_box.form.submit()
-        })
-      },
-      async function() {
-        try {
+  suite([
+    {
+      start_at: 'http://google.com',
+      steps: [
+        function() {
+          return true
+        }
+      ]
+    },
+    {
+      start_at: 'http://google.com',
+      steps: [
+        function() {
+          return false
+        }
+      ]
+    },
+    {
+      description: 'run a google search',
+      start_at: 'http://google.com',
+      steps: [
+        async function() {
+          await runtime.eval(function() {
+            var search_box = document.querySelector('#lst-ib')
+            search_box.value = 'google'
+            search_box.form.submit()
+          })
+        },
+        async function() {
           var title = await runtime.eval(function() {
             return document.title
           })
           var number_of_results = await runtime.eval(function() {
             return document.querySelectorAll('.g').length
           })
-        } catch (e) {
-          // fail the test if it threw
-          console.log('error occured in expression eval', e)
-          return false
+          return (
+            title === 'google - Google Search' &&
+            number_of_results === 10
+          )
         }
-        return (
-          title === 'google - Google Search' &&
-          number_of_results === 10
-        )
-      }
-    ]
-  }])
+      ]
+    }
+  ])
 })()
