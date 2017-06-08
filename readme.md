@@ -1,5 +1,5 @@
 
-# gore :feelsgood:
+# gore
 
 gore is a simple and mostly unfinished chrome headless test runner using a slightly monkey-patched [chrome-remote-interface](https://npmjs.org/package/chrome-remote-interface) as the mechanism for controlling the chrome instance.
 
