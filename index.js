@@ -10,11 +10,6 @@ var remote_debug = util.promisify(function(x, cb) {
   chrome(cb.bind(cb, null)).on('error', cb)
 })
 
-// TODO write abstraction for Runtime.evaluate
-// TODO add elapsed time
-// TODO add more devtools domains and abstractions
-// TODO fix duplication with `next_test_or_quit` or similar
-
 async function next_test_or_quit(step_index, test_index, suite, failed) {
   step_index = 0
   test_index += 1
@@ -39,7 +34,7 @@ async function next_test_or_quit(step_index, test_index, suite, failed) {
 
 function get_export() {
   return {
-    tests: async function(suite) {
+    suite: async function(suite) {
       var failed = 0
       var test_index = 0
       var step_index = 0
@@ -163,7 +158,19 @@ function get_export() {
     page: this.rd.Page,
     dom: this.rd.DOM,
     network: this.rd.Network,
-    runtime: this.rd.Runtime,
+    runtime: Object.assign(this.rd.Runtime, {
+      eval: async function(expression) {
+        var res = await this.rd.Runtime.evaluate({
+          expression: `(function() {return new Promise(function(resolve, reject) {try {resolve((${expression.toString()})())} catch (e) {reject(e)}})})()`,
+          awaitPromise: true
+        })
+        if (res.exceptionDetails) {
+          // the input expression threw
+          throw new Error(JSON.stringify(res.exceptionDetails.exception, '\t', 2))
+        }
+        return res.result.value
+      }.bind(this)
+    }),
     input: this.rd.Input,
     kill: function() {
       return Promise.all([
@@ -174,13 +181,13 @@ function get_export() {
   }
 }
 
-var instance = {}
+var gore = {}
 
 module.exports = async function(options = {}) {
   
-  if (instance.launcher && instance.rd) return get_export.call(instance)
+  if (gore.launcher && gore.rd) return get_export.call(gore)
   
-  instance.launcher = new Launcher({
+  gore.launcher = new Launcher({
     port: 9222,
     chromeFlags: [
       `--window-size=${options.width || 1024},${options.height || 768}`,
@@ -190,8 +197,8 @@ module.exports = async function(options = {}) {
   })
 
   try {
-    instance.rd = (await (
-      instance.launcher.launch()
+    gore.rd = (await (
+      gore.launcher.launch()
     ).then(
       remote_debug
     ).then(function(rd) {
@@ -205,7 +212,7 @@ module.exports = async function(options = {}) {
       ])
     })).shift()
   } catch (e) {
-    instance.launcher.kill().catch(console.log)
+    gore.launcher.kill().catch(console.log)
     console.log(e)
     throw new Error('unable to initialise remote debug context')
   }
@@ -213,13 +220,13 @@ module.exports = async function(options = {}) {
   if (options.system) {
     try {
       // this throws for some reason
-      await instance.rd.SystemInfo.getInfo().then(console.log)
+      await gore.rd.SystemInfo.getInfo().then(console.log)
     } catch (e) {
       console.log(e)
     }
   }
 
-  if (options.console) instance.rd.Log.entryAdded(console.log)
+  if (options.console) gore.rd.Log.entryAdded(console.log)
 
-  return get_export.call(instance)
+  return get_export.call(gore)
 }

@@ -3,59 +3,44 @@
 
   'use strict'
 
-  var headless_testing = require('.')
+  var gore = require('.')
 
   var {
-    tests, page, dom,
-    network, runtime,
-    input, kill
-  } = await headless_testing().catch(function(err) {
+    suite, runtime
+  } = await gore().catch(function(err) {
     console.log(err)
     process.exit(1)
   })
 
-  tests([{
-    description: 'foo',
+  suite([{
+    description: 'run a google search',
     start_at: 'http://google.com',
     steps: [
       async function() {
-        // return null to indicate manual navigation
-        // return string to navigate
-        // return true to pass
-        // return false to fail
-        console.log(1)
-        return 'http://google.com/#q=a'
+        await runtime.eval(function() {
+          var search_box = document.querySelector('#lst-ib')
+          search_box.value = 'google'
+          search_box.form.submit()
+        })
       },
       async function() {
-        console.log(2)
-        return 'http://google.com/#q=b'
-      },
-      async function() {
-        console.log(3)
-        return true
-      }
-    ]
-  }, {
-    description: 'bar',
-    start_at: 'http://google.com',
-    steps: [
-      async function() {
-        // return null to indicate manual navigation
-        // return string to navigate
-        // return true to pass
-        // return false to fail
-        console.log(4)
-        return 'http://google.com/#q=c'
-      },
-      async function() {
-        console.log(5)
-        return 'http://google.com/#q=d'
-      },
-      async function() {
-        console.log(6)
-        return true
+        try {
+          var title = await runtime.eval(function() {
+            return document.title
+          })
+          var number_of_results = await runtime.eval(function() {
+            return document.querySelectorAll('.g').length
+          })
+        } catch (e) {
+          // fail the test if it threw
+          console.log('error occured in expression eval', e)
+          return false
+        }
+        return (
+          title === 'google - Google Search' &&
+          number_of_results === 10
+        )
       }
     ]
   }])
-
 })()

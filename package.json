@@ -1,5 +1,5 @@
 {
-  "name": "probable-disco",
+  "name": "gore",
   "version": "0.0.0",
   "description": "headless chrome test harness",
   "keywords": [
@@ -9,6 +9,13 @@
     "test"
   ],
   "main": "index.js",
+  "engines": {
+    "node" : ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skibz/gore.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
