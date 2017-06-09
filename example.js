@@ -14,6 +14,19 @@
 
   suite([
     {
+      // this test case throws with language level error
+      start_at: 'http://google.com',
+      steps: [
+        function() {
+          return lajsdlfjsdlkf
+        },
+        function() {
+          return true
+        }
+      ]
+    },
+    {
+      // this test case throws on explicit navigation
       start_at: 'http://google.com',
       steps: [
         function() {
@@ -25,10 +38,23 @@
       ]
     },
     {
+      // this test case doesn't follow the final-step boolean rule
+      start_at: 'http://google.com',
+      steps: [
+        function() {
+          return null
+        }
+      ]
+    },
+    {
+      // this test case explicitly fails early
       start_at: 'http://google.com',
       steps: [
         function() {
           return false
+        },
+        function() {
+          return true
         }
       ]
     },
