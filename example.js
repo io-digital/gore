@@ -20,7 +20,7 @@
         function() {
           return 'http://news.ycombinator.com/newest'
         },
-        async function() {
+        function() {
           return true
         }
       ]
