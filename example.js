@@ -14,6 +14,18 @@
 
   suite([
     {
+      // this test case explicitly navigates
+      start_at: 'http://news.ycombinator.com',
+      steps: [
+        function() {
+          return 'http://news.ycombinator.com/newest'
+        },
+        async function() {
+          return true
+        }
+      ]
+    },
+    {
       // this test case throws with language level error
       start_at: 'http://google.com',
       steps: [
