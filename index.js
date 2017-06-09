@@ -44,7 +44,6 @@ async function next_test_or_quit(test_index, suite, failed, passed) {
 
 function validate_suite(suite) {
   console.log('[gore]', 'starting:', 'test suite type check')
-  var tests = []
   if (!(Array.isArray(suite) && suite.length)) {
     throw new Error('expected lengthy array `suite`')
   }
