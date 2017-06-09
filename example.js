@@ -3,59 +3,97 @@
 
   'use strict'
 
-  var headless_testing = require('.')
+  var gore = require('.')
 
   var {
-    tests, page, dom,
-    network, runtime,
-    input, kill
-  } = await headless_testing().catch(function(err) {
+    suite, runtime
+  } = await gore().catch(function(err) {
     console.log(err)
     process.exit(1)
   })
 
-  tests([{
-    description: 'foo',
-    start_at: 'http://google.com',
-    steps: [
-      async function() {
-        // return null to indicate manual navigation
-        // return string to navigate
-        // return true to pass
-        // return false to fail
-        console.log(1)
-        return 'http://google.com/#q=a'
-      },
-      async function() {
-        console.log(2)
-        return 'http://google.com/#q=b'
-      },
-      async function() {
-        console.log(3)
-        return true
-      }
-    ]
-  }, {
-    description: 'bar',
-    start_at: 'http://google.com',
-    steps: [
-      async function() {
-        // return null to indicate manual navigation
-        // return string to navigate
-        // return true to pass
-        // return false to fail
-        console.log(4)
-        return 'http://google.com/#q=c'
-      },
-      async function() {
-        console.log(5)
-        return 'http://google.com/#q=d'
-      },
-      async function() {
-        console.log(6)
-        return true
-      }
-    ]
-  }])
-
+  suite([
+    {
+      // this test case explicitly navigates
+      start_at: 'http://news.ycombinator.com',
+      steps: [
+        function() {
+          return 'http://news.ycombinator.com/newest'
+        },
+        function() {
+          return true
+        }
+      ]
+    },
+    {
+      // this test case throws with language level error
+      start_at: 'http://google.com',
+      steps: [
+        function() {
+          return lajsdlfjsdlkf
+        },
+        function() {
+          return true
+        }
+      ]
+    },
+    {
+      // this test case throws on explicit navigation
+      start_at: 'http://google.com',
+      steps: [
+        function() {
+          return 'doesntexist'
+        },
+        function() {
+          return true
+        }
+      ]
+    },
+    {
+      // this test case doesn't follow the final-step boolean rule
+      start_at: 'http://google.com',
+      steps: [
+        function() {
+          return null
+        }
+      ]
+    },
+    {
+      // this test case explicitly fails early
+      start_at: 'http://google.com',
+      steps: [
+        function() {
+          return false
+        },
+        function() {
+          return true
+        }
+      ]
+    },
+    {
+      description: 'run a google search',
+      start_at: 'http://google.com',
+      steps: [
+        async function() {
+          await runtime.eval(function() {
+            var search_box = document.querySelector('#lst-ib')
+            search_box.value = 'google'
+            search_box.form.submit()
+          })
+        },
+        async function() {
+          var title = await runtime.eval(function() {
+            return document.title
+          })
+          var number_of_results = await runtime.eval(function() {
+            return document.querySelectorAll('.g').length
+          })
+          return (
+            title === 'google - Google Search' &&
+            number_of_results === 10
+          )
+        }
+      ]
+    }
+  ])
 })()
