@@ -71,21 +71,25 @@ function get_export() {
     page: this.rd.Page,
     dom: this.rd.DOM,
     network: this.rd.Network,
-    suite: async function(suite) {
-      
+    sleep: function(duration) {
+      return new Promise(function(resolve) {
+        setTimeout(resolve, duration)
+      })
+    },
+    suite: async suite => {
       // first ensure the test suite is usable
-      validate_suite(suite)
 
+      validate_suite(suite)
       // accumulate user output
       var failed = []
       var passed = []
-      
+
       // set up control variables
       var test_index = -1
       var step_index = 0
 
       // bind the page load event
-      this.rd.Page.loadEventFired(async function() {
+      this.rd.Page.loadEventFired(async _ => {
         var threw = false
         try {
           // attempt to run the step
@@ -94,7 +98,7 @@ function get_export() {
           failed.push(`test ${test_index + 1} step ${step_index + 1} failed with an error: \n  ${e.stack}`)
           threw = true
         }
-        
+
         var result_type = typeof result
         if (threw) {
           // the test threw, wait for the next test case to begin...
@@ -128,13 +132,13 @@ function get_export() {
           failed.push(`test ${test_index + 1} step ${step_index + 1} failed with unexpected type: ${result_type}`)
         }
         step_index = await next_test_or_quit.call(this, ++test_index, suite, failed, passed)
-      }.bind(this))
+      })
 
       // navigate to the first test case
       await next_test_or_quit.call(this, ++test_index, suite, failed, passed)
-    }.bind(this),
+    },
     runtime: Object.assign(this.rd.Runtime, {
-      eval: async function(expression) {
+      eval: async expression => {
         var res = await this.rd.Runtime.evaluate({
           expression: `(function() {return new Promise(function(resolve, reject) {try {resolve((${expression.toString()})())} catch (e) {reject(e)}})})()`,
           awaitPromise: true
@@ -146,14 +150,14 @@ function get_export() {
           throw err
         }
         return res.result.value
-      }.bind(this)
+      }
     }),
-    kill: function() {
+    kill: _ => {
       return Promise.all([
         this.rd.close(),
         this.launcher.kill()
       ]).catch(console.log)
-    }.bind(this)
+    }
   }
 }
 
