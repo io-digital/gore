@@ -26,6 +26,8 @@ each test case and its constituent steps are executed sequentially.
           search_box.form.submit() // submit the form to trigger a page navigation
                                    // which causes the next step to be executed
         })
+        // return nothing (undefined) from this step to
+        // indicate that page navigation was implicit
       },
       async function() {
         var title = await runtime.eval(function() {
@@ -34,7 +36,7 @@ each test case and its constituent steps are executed sequentially.
         var number_of_results = await runtime.eval(function() {
           return document.querySelectorAll('.g').length
         })
-        return (
+        return ( // return a boolean to indicate the test outcome
           title === 'google - Google Search' &&
           number_of_results === 10
         )
