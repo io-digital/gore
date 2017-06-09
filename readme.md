@@ -3,8 +3,6 @@
 
 gore is a simple and mostly unfinished chrome headless test runner using a slightly monkey-patched [chrome-remote-interface](https://npmjs.org/package/chrome-remote-interface) as the mechanism for controlling the chrome instance.
 
-the test runner is page navigation oriented, meaning that individual tests are split into steps (just async functions) that trigger some kind of page navigation and ultimately a boolean value indicating the outcome of your test case.
-
 the test runner is page navigation oriented, meaning that each test case is made up of discrete steps (just async functions) that interact with the page in some way.
 
 every step in a test case besides the final one is allowed to return `boolean`, `string` and `undefined` values allowing you to pass or fail a test early, navigate to a new page, or declare that navigation occurred manually, respectively. the final step of a test is required to return a `boolean` value to indicate the outcome.
