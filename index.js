@@ -10,11 +10,18 @@ var remote_debug = util.promisify(function(x, cb) {
   chrome(cb.bind(cb, null)).on('error', cb)
 })
 
-async function next_test_or_quit(test_index, suite, failed) {
+async function next_test_or_quit(test_index, suite, failed, passed) {
+  // if there are no more tests to run
   if (test_index >= suite.length) {
+    // report failures
     failed.forEach(function(failure) {
       console.log('[gore]', 'failure:', failure)
     })
+    // report successes
+    passed.forEach(function(pass) {
+      console.log('[gore]', 'passed:', pass)
+    })
+    // shut down chrome, remote debug interface and node
     var exit = process.exit.bind(process, failed.length ? 1 : 0)
     return Promise.all([
       this.rd.close(),
@@ -30,13 +37,13 @@ async function next_test_or_quit(test_index, suite, failed) {
     await this.rd.Page.navigate({url: suite[test_index].start_at})
   } catch (e) {
     failed.push(`test ${test_index + 1} step 1 failed with navigation error ${e}`)
-    return (await next_test_or_quit.call(this, ++test_index, suite, failed))
+    return (await next_test_or_quit.call(this, ++test_index, suite, failed, passed))
   }
   return 0
 }
 
 function validate_suite(suite) {
-  console.log('[gore]', 'starting:', 'test suite argument type check')
+  console.log('[gore]', 'starting:', 'test suite type check')
   var tests = []
   if (!(Array.isArray(suite) && suite.length)) {
     throw new Error('expected lengthy array `suite`')
@@ -56,24 +63,31 @@ function validate_suite(suite) {
       }
     }
   }
-  console.log('[gore]', 'stopping:', 'type check success')
+  console.log('[gore]', 'passed:', 'test suite type check')
 }
 
 function get_export() {
   return {
+    input: this.rd.Input,
+    page: this.rd.Page,
+    dom: this.rd.DOM,
+    network: this.rd.Network,
     suite: async function(suite) {
+      
       // first ensure the test suite is usable
       validate_suite(suite)
 
-      // set up control variables
+      // accumulate user output
       var failed = []
+      var passed = []
+      
+      // set up control variables
       var test_index = -1
       var step_index = 0
 
       // bind the page load event
       this.rd.Page.loadEventFired(async function() {
         var threw = false
-        // console.log('page load', test_index, step_index)
         try {
           // attempt to run the step
           var result = await suite[test_index].steps[step_index]()
@@ -85,7 +99,13 @@ function get_export() {
         var result_type = typeof result
         if (threw) {
           // the test threw, wait for the next test case to begin...
-        } else if (result_type === 'undefined') {
+        } else if (result_type === 'undefined' || result === null) {
+          if (step_index === suite[test_index].steps.length - 1) {
+            // the test case is faulty
+            failed.push(`test ${test_index + 1} step ${step_index + 1} failed to yield a boolean result`)
+            step_index = await next_test_or_quit.call(this, ++test_index, suite, failed, passed)
+            return
+          }
           step_index += 1
           return // return to wait for the next page load event
                  // because the test case is not finished yet
@@ -97,26 +117,23 @@ function get_export() {
                    // because the test case is not finished yet
           } catch (e) {
             failed.push(`test ${test_index + 1} step ${step_index + 1} failed with navigation error: \n  ${e} "${result}"`)
-            step_index = await next_test_or_quit.call(this, ++test_index, suite, failed)
+            step_index = await next_test_or_quit.call(this, ++test_index, suite, failed, passed)
             return
           }
         } else if (result_type === 'boolean' && !result) {
           failed.push(`test ${test_index + 1} step ${step_index + 1} failed with boolean false`)
         } else if (result_type === 'boolean' && result) {
           // the test passed, do nothing...
-          console.log('[gore]', 'passed:', suite[test_index].description)
+          passed.push(suite[test_index].description)
         } else {
           failed.push(`test ${test_index + 1} step ${step_index + 1} failed with unexpected type: ${result_type}`)
         }
-        step_index = await next_test_or_quit.call(this, ++test_index, suite, failed)
+        step_index = await next_test_or_quit.call(this, ++test_index, suite, failed, passed)
       }.bind(this))
 
       // navigate to the first test case
-      await next_test_or_quit.call(this, ++test_index, suite, failed)
+      await next_test_or_quit.call(this, ++test_index, suite, failed, passed)
     }.bind(this),
-    page: this.rd.Page,
-    dom: this.rd.DOM,
-    network: this.rd.Network,
     runtime: Object.assign(this.rd.Runtime, {
       eval: async function(expression) {
         var res = await this.rd.Runtime.evaluate({
@@ -132,7 +149,6 @@ function get_export() {
         return res.result.value
       }.bind(this)
     }),
-    input: this.rd.Input,
     kill: function() {
       return Promise.all([
         this.rd.close(),
