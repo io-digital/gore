@@ -37,7 +37,7 @@ each test case and its constituent steps are executed sequentially.
           return document.querySelectorAll('.g').length
         })
         return ( // return a boolean to indicate the test outcome
-          title === 'google - Google Search' &&
+          title === 'kitties - Google Search' &&
           number_of_results === 10
         )
       }
@@ -62,7 +62,6 @@ each test case and its constituent steps are executed sequentially.
 * [ ] test case parallelism using multiple chrome instances/tabs?
 * [ ] before/after(all) hooks
 * [ ] machine readable output formats
-* [ ] detect faulty/unending test cases (final function in steps returns `null`/`undefined`)
 
 ## legal
 
